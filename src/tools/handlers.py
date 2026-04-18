@@ -1,71 +1,117 @@
-"""Implémentations concrètes des outils invoqués par l'agent."""
-import json
-from typing import Any
+"""Outils exposés à l'agent, déclarés comme LangChain Tools via le décorateur @tool.
 
-from groq import Groq
+Les signatures typées + docstrings servent directement de schéma JSON pour le LLM:
+LangChain génère automatiquement la définition OpenAI-compatible des fonctions.
+"""
+import json
+from typing import Optional
+
+from langchain_core.tools import tool
+from langchain_groq import ChatGroq
 
 from src.config import get_settings
 from src.services.calendar import get_calendar_repository
 
 
-def tool_get_agenda(args: dict) -> str:
+@tool
+def get_agenda(date: Optional[str] = None, range: Optional[str] = None) -> str:
+    """Liste les événements de l'agenda.
+
+    Args:
+        date: Filtre une date précise au format YYYY-MM-DD.
+        range: Plage prédéfinie. Valeur acceptée: 'week' pour les 7 prochains jours.
+    """
     repo = get_calendar_repository()
-    events = repo.list_events(date=args.get("date"), range_=args.get("range"))
+    events = repo.list_events(date=date, range_=range)
     return json.dumps([e.model_dump() for e in events], ensure_ascii=False)
 
 
-def tool_create_event(args: dict) -> str:
+@tool
+def create_event(
+    title: str,
+    date: str,
+    time: str,
+    participants: str = "",
+    notes: str = "",
+) -> str:
+    """Crée un événement dans l'agenda.
+
+    Args:
+        title: Intitulé de l'événement.
+        date: Date au format YYYY-MM-DD.
+        time: Heure au format HH:MM.
+        participants: Liste de participants séparés par une virgule.
+        notes: Notes libres associées à l'événement.
+    """
     repo = get_calendar_repository()
     ev = repo.create_event(
-        title=args["title"],
-        date=args["date"],
-        time=args["time"],
-        participants=args.get("participants", ""),
-        notes=args.get("notes", ""),
+        title=title, date=date, time=time, participants=participants, notes=notes
     )
     return json.dumps(ev.model_dump(), ensure_ascii=False)
 
 
-def tool_update_event(args: dict) -> str:
+@tool
+def update_event(
+    event_id: str,
+    title: Optional[str] = None,
+    date: Optional[str] = None,
+    time: Optional[str] = None,
+    participants: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> str:
+    """Met à jour un ou plusieurs champs d'un événement existant.
+
+    À utiliser pour décaler, renommer ou modifier un rendez-vous. Appeler
+    `get_agenda` d'abord si l'id n'est pas connu.
+    """
     repo = get_calendar_repository()
-    event_id = str(args.pop("event_id"))
-    patch = {k: v for k, v in args.items() if v is not None}
-    ev = repo.update_event(event_id, patch)
+    patch = {
+        k: v for k, v in {
+            "title": title, "date": date, "time": time,
+            "participants": participants, "notes": notes,
+        }.items() if v is not None
+    }
+    ev = repo.update_event(str(event_id), patch)
     if not ev:
         return json.dumps({"error": "Événement introuvable", "event_id": event_id}, ensure_ascii=False)
     return json.dumps(ev.model_dump(), ensure_ascii=False)
 
 
-def tool_delete_event(args: dict) -> str:
+@tool
+def delete_event(event_id: str) -> str:
+    """Supprime un événement de l'agenda par son identifiant.
+
+    À utiliser quand l'utilisateur demande d'annuler ou supprimer un rendez-vous.
+    Appeler `get_agenda` d'abord si l'id n'est pas connu.
+    """
     repo = get_calendar_repository()
-    ok = repo.delete_event(str(args["event_id"]))
-    return json.dumps({"deleted": ok, "event_id": args["event_id"]}, ensure_ascii=False)
+    ok = repo.delete_event(str(event_id))
+    return json.dumps({"deleted": ok, "event_id": event_id}, ensure_ascii=False)
 
 
-def tool_summarize_document(args: dict) -> str:
-    """Synthèse structurée via un deuxième appel LLM (output JSON)."""
+@tool
+def summarize_document(text: str, focus: str = "") -> str:
+    """Produit une synthèse structurée d'un document fourni en texte brut.
+
+    Retourne un JSON avec les clés: resume, points_cles, decisions, actions.
+
+    Args:
+        text: Contenu textuel du document à synthétiser.
+        focus: Axe de la synthèse (optionnel).
+    """
     settings = get_settings()
-    client = Groq(api_key=settings.groq_api_key)
-    focus = args.get("focus", "")
+    llm = ChatGroq(
+        api_key=settings.groq_api_key, model=settings.groq_model, temperature=0.2,
+        model_kwargs={"response_format": {"type": "json_object"}},
+    )
     prompt = (
         "Tu es un assistant qui produit des synthèses structurées de documents. "
         "Retourne STRICTEMENT un JSON avec les clés: 'resume' (str), "
         "'points_cles' (list[str]), 'decisions' (list[str]), 'actions' (list[str]). "
-        f"Axe optionnel: {focus}\n\nDocument:\n{args['text']}"
+        f"Axe optionnel: {focus}\n\nDocument:\n{text}"
     )
-    resp = client.chat.completions.create(
-        model=settings.groq_model,
-        messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"},
-        temperature=0.2,
-    )
-    return resp.choices[0].message.content or "{}"
+    return llm.invoke(prompt).content or "{}"
 
 
-TOOL_HANDLERS: dict[str, Any] = {
-    "get_agenda": tool_get_agenda,
-    "create_event": tool_create_event,
-    "update_event": tool_update_event,
-    "delete_event": tool_delete_event,
-    "summarize_document": tool_summarize_document,
-}
+# Liste exposée à l'orchestrateur LangChain.
+TOOLS = [get_agenda, create_event, update_event, delete_event, summarize_document]

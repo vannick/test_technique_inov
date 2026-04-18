@@ -1,0 +1,44 @@
+services:
+  api:
+    build: .
+    container_name: assistant-direction-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Persistance SQLite + hot-reload du code en dev
+      - ./data:/app/data
+      - ./src:/app/src
+      - ./main.py:/app/main.py
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    restart: unless-stopped
+
+  # Serveur CalDAV local (utilisé quand CALENDAR_BACKEND=caldav).
+  # Activer avec : docker compose --profile caldav up -d
+  radicale:
+    image: tomsquest/docker-radicale
+    container_name: radicale
+    profiles: ["caldav"]
+    init: true
+    read_only: true
+    ports:
+      - "127.0.0.1:5232:5232"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - KILL
+    pids_limit: 50
+    mem_limit: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:5232 || exit 1"]
+      interval: 30s
+      retries: 3
+    volumes:
+      - ${HOME}/radicale/data:/data
+    restart: unless-stopped

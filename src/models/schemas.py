@@ -1,6 +1,7 @@
 """Schémas Pydantic utilisés par les routes."""
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -31,12 +32,15 @@ class EventOut(BaseModel):
 
 
 class ChatIn(BaseModel):
-    session_id: Optional[str] = None
+    session_id: Optional[UUID] = Field(
+        default=None,
+        description="UUID de session existante. Laisser null au premier appel: le serveur en génère un.",
+    )
     message: str
 
 
 class ChatOut(BaseModel):
-    session_id: str
+    session_id: UUID
     response: str
     tool_used: Optional[str] = None
     turn: int

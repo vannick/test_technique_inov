@@ -36,7 +36,6 @@ def patch_event(event_id: str, patch: EventPatch):
 @router.delete("/{event_id}", status_code=204, summary="Supprimer un événement")
 def delete_event(event_id: str):
     """Supprime l'événement (HTTP 204). Renvoie 404 si l'identifiant est inconnu."""
-    ok = get_calendar_repository().delete_event(event_id)
-    if not ok:
+    if not get_calendar_repository().delete_event(event_id):
         raise HTTPException(status_code=404, detail="Événement introuvable")
     return Response(status_code=204)

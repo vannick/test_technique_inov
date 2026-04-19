@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     )
 
     #LLM
-    llm_api_key: str = Field(default="", alias="GROQ_API_KEY")
-    llm_model: str = Field(default="llama-3.3-70b-versatile", alias="GROQ_MODEL")
+    llm_api_key: str = Field(default="", alias="LLM_API_KEY")
+    llm_model: str = Field(default="llama-3.3-70b-versatile", alias="LLM_MODEL")
 
     # Base de données
     database_url: str = Field(
@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     caldav_password: Optional[str] = Field(default=None, alias="CALDAV_PASSWORD")
     caldav_calendar_name: Optional[str] = Field(
         default=None, alias="CALDAV_CALENDAR_NAME"
+    )
+    # URL directe d'une collection (ex: Radicale /<user>/<uuid>/). Si fournie,
+    # elle court-circuite la découverte par principal et le filtre par nom.
+    caldav_calendar_url: Optional[str] = Field(
+        default=None, alias="CALDAV_CALENDAR_URL"
     )
 
     # API

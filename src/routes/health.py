@@ -28,5 +28,5 @@ def health():
         "status": "ok" if db_ok else "degraded",
         "database": "up" if db_ok else "down",
         "calendar_backend": settings.calendar_backend,
-        "llm_configured": bool(settings.groq_api_key),
+        "llm_configured": bool(settings.llm_api_key),
     }

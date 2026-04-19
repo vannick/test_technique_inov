@@ -1,5 +1,6 @@
 """Routes de l'agent: dialogue (/chat) et introspection des outils (/tools)."""
 from fastapi import APIRouter, HTTPException
+from loguru import logger
 
 from src.models.schemas import ChatIn, ChatOut
 from src.services.agent import run_agent
@@ -41,5 +42,6 @@ def chat(payload: ChatIn) -> ChatOut:
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
     except Exception as e:  # noqa: BLE001
+        logger.exception(f"Erreur agent: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur agent: {e}") from e
     return ChatOut(**result)

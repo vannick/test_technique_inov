@@ -1,10 +1,16 @@
-"""Seed de l'agenda — 5 événements relatifs à la date courante."""
+"""Seed de l'agenda — 5 événements relatifs à la date courante.
+
+Backend-agnostic: passe par `CalendarRepository` pour insérer les événements,
+donc peuple aussi bien la base SQLite que le calendrier CalDAV actif.
+Idempotent via un marqueur inclus dans les notes.
+"""
 from datetime import date, timedelta
 
 from loguru import logger
 
-from src.db.database import SessionLocal
-from src.models.orm import Event
+from src.services.calendar import get_calendar_repository
+
+SEED_MARKER = "[seed]"
 
 SEED_EVENTS = [
     {"offset": 1, "title": "Comité de direction", "time": "09:00",
@@ -21,23 +27,35 @@ SEED_EVENTS = [
 
 
 def seed_agenda() -> None:
-    """Insère les événements de départ si la table est vide."""
-    db = SessionLocal()
+    """Insère les événements de départ si le calendrier actif est vide de seeds.
+
+    La détection s'appuie sur le marqueur `[seed]` présent dans les notes:
+    le seed ne se re-déclenche pas quand on relance l'app.
+    """
     try:
-        if db.query(Event).count() > 0:
-            logger.info("Seed ignoré — agenda déjà peuplé.")
-            return
-        today = date.today()
-        for item in SEED_EVENTS:
-            ev = Event(
+        repo = get_calendar_repository()
+        existing = repo.list_events()
+    except Exception as e:  # noqa: BLE001
+        # Serveur CalDAV indisponible au démarrage: on saute le seed sans planter l'app.
+        logger.warning(f"Seed ignoré — backend calendrier inaccessible: {e}")
+        return
+
+    if any(SEED_MARKER in (ev.notes or "") for ev in existing):
+        logger.info("Seed ignoré — agenda déjà peuplé (marqueur détecté).")
+        return
+
+    today = date.today()
+    created = 0
+    for item in SEED_EVENTS:
+        try:
+            repo.create_event(
                 title=item["title"],
                 date=(today + timedelta(days=item["offset"])).isoformat(),
                 time=item["time"],
                 participants=item["participants"],
-                notes=item["notes"],
+                notes=f"{item['notes']} {SEED_MARKER}",
             )
-            db.add(ev)
-        db.commit()
-        logger.info(f"Seed agenda: {len(SEED_EVENTS)} événements insérés.")
-    finally:
-        db.close()
+            created += 1
+        except Exception as e:  # noqa: BLE001
+            logger.exception(f"Seed: échec création '{item['title']}': {e}")
+    logger.info(f"Seed agenda: {created}/{len(SEED_EVENTS)} événements insérés.")

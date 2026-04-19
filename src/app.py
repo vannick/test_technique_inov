@@ -20,8 +20,9 @@ async def lifespan(_app: FastAPI):
     # Toujours initialiser la DB: elle porte aussi la mémoire de session,
     # même quand l'agenda est servi par CalDAV.
     init_db()
-    if settings.calendar_backend == "db":
-        seed_agenda()
+    # Le seed passe par la factory CalendarRepository et peuple donc
+    # le backend actif (SQLite ou CalDAV) de façon idempotente.
+    seed_agenda()
     yield
     logger.info("Arrêt de l'application")
 

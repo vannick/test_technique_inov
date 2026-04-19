@@ -101,7 +101,7 @@ def summarize_document(text: str, focus: str = "") -> str:
     """
     settings = get_settings()
     llm = ChatGroq(
-        api_key=settings.groq_api_key, model=settings.groq_model, temperature=0.2,
+        api_key=settings.llm_api_key, model=settings.llm_model, temperature=0.2,
         model_kwargs={"response_format": {"type": "json_object"}},
     )
     prompt = (

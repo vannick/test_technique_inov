@@ -1,4 +1,4 @@
-# Assistante de direction INOVIE — Backend IA
+# Assistante de direction INOVIE - Backend IA
 
 API FastAPI d'un agent IA (tool calling via Groq + LangChain) capable de :
 
@@ -59,34 +59,74 @@ L'API est exposée sur **<http://localhost:8002>**.
 
 ### Avec serveur CalDAV local (Radicale)
 
-Le `docker-compose.yml` inclut un profil `caldav` qui démarre Radicale :
+Le `docker-compose.yml` inclut un profil `caldav` qui démarre **Radicale**
+(image `tomsquest/docker-radicale`) sur `http://127.0.0.1:5232`.
+
+#### 1. Démarrer Radicale
 
 ```bash
-docker compose --profile caldav up --build
+docker compose --profile caldav up -d radicale
 ```
 
-Ensuite, dans `.env` :
+Les données sont persistées dans `~/radicale/data` sur l'hôte.
+
+#### 2. Créer un utilisateur 
+
+Créer un utilisateur `admin` et Mot de passe `admin`:
+
+
+#### 3. Créer une collection (calendrier) et récupérer son URL
+
+Ouvrir <http://127.0.0.1:5232> dans un navigateur, se connecter avec
+`admin` / `admin`, puis **Create new addressbook or calendar** :
+
+- **Title** : `Agenda principal` (libre)
+- **Type** : `Calendar`
+- **Color** : libre
+
+le plus important note le uuid sur la page de la collection
+
+Après création, la collection apparaît dans la liste avec une URL de la forme :
+
+```
+http://127.0.0.1:5232/admin/<uuid>/
+```
+
+Exemple réel :
+
+```
+http://127.0.0.1:5232/admin/ed06ced5-0851-39bc-fe2c-3ac4a61b08fe/
+```
+
+#### 4. Configurer `.env`
 
 ```bash
 CALENDAR_BACKEND=caldav
-CALDAV_URL=http://radicale:5232           # ou http://127.0.0.1:5232 en local
+CALDAV_URL=http://127.0.0.1:5232
 CALDAV_USERNAME=admin
-CALDAV_PASSWORD=<mot de passe configuré>
-CALDAV_CALENDAR_URL=http://127.0.0.1:5232/admin/<uuid-collection>/
+CALDAV_PASSWORD=admin
+CALDAV_CALENDAR_URL=http://127.0.0.1:5232/admin/<uuid-de-l-étape-3>/
 ```
+
+> Note: si l'API tourne **aussi** dans `docker compose` (pas en local),
+> utiliser `CALDAV_URL=http://radicale:5232` (résolution via le réseau Docker).
+
+Au premier lancement, `seed_agenda` pousse les événements de démonstration
+dans la collection (idempotent : relance sans doublons grâce au marqueur
+`[seed]` dans les notes).
 
 ## Variables d'environnement
 
 | Variable | Rôle | Défaut |
 |---|---|---|
-| `LLM_API_KEY` | Clé API Groq (**obligatoire**) | — |
+| `LLM_API_KEY` | Clé API Groq (**obligatoire**) | - |
 | `LLM_MODEL` | Modèle Groq | `llama-3.3-70b-versatile` |
 | `DATABASE_URL` | URL SQLAlchemy | `sqlite:///./data/app.db` |
 | `CALENDAR_BACKEND` | `db` ou `caldav` | `db` |
-| `CALDAV_URL` | Racine du serveur CalDAV | — |
-| `CALDAV_USERNAME` / `CALDAV_PASSWORD` | Credentials CalDAV | — |
+| `CALDAV_URL` | Racine du serveur CalDAV | - |
+| `CALDAV_USERNAME` / `CALDAV_PASSWORD` | Credentials CalDAV | - |
 | `CALDAV_CALENDAR_NAME` | Nom de calendrier à cibler | *premier trouvé* |
-| `CALDAV_CALENDAR_URL` | URL directe de collection (prioritaire sur `_NAME`) | — |
+| `CALDAV_CALENDAR_URL` | URL directe de collection (prioritaire sur `_NAME`) | - |
 | `API_KEY` | Si définie, toutes les routes (hors `/health`) exigent le header `X-API-Key` | *vide = auth désactivée* |
 | `LOG_LEVEL` | Niveau de log (`DEBUG`/`INFO`/…) | `INFO` |
 
@@ -121,7 +161,7 @@ curl -H "X-API-Key: $API_KEY" http://localhost:8001/agenda
 | `GET` | `/session/{id}/history` | Historique d'une session de chat |
 | `GET` | `/health` | Statut API + DB + backend calendrier + LLM |
 
-### Exemple — dialoguer avec l'agent
+### Exemple - dialoguer avec l'agent
 
 ```bash
 curl -X POST http://localhost:8001/agent/chat \
@@ -142,7 +182,7 @@ Réponse :
 
 Pour continuer la conversation, réutilise le `session_id` renvoyé.
 
-### Exemple — CRUD direct
+### Exemple - CRUD direct
 
 ```bash
 # Créer
@@ -264,5 +304,5 @@ Couverture :
 2. L'ajouter à la liste `TOOLS` en bas du fichier
 3. (Optionnel) Créer un service dédié dans `src/services/email/`
 
-Aucune modification de l'orchestrateur n'est nécessaire — LangChain
+Aucune modification de l'orchestrateur n'est nécessaire - LangChain
 génère le schéma automatiquement depuis la signature + docstring.

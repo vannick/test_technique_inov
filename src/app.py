@@ -1,13 +1,14 @@
 """Factory FastAPI — enregistre les routes, middlewares et le seed au démarrage."""
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from loguru import logger
 
 from src.config import get_settings
 from src.db.database import init_db
 from src.db.seed import seed_agenda
 from src.routes import agenda, agent, health, session
+from src.security import require_api_key
 
 
 @asynccontextmanager
@@ -38,8 +39,11 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    app.include_router(agent.router)
-    app.include_router(agenda.router)
-    app.include_router(session.router)
+    # /health reste ouvert (liveness check). Les autres routers sont
+    # protégés par la dépendance `require_api_key` (header X-API-Key).
+    protected = [Depends(require_api_key)]
+    app.include_router(agent.router, dependencies=protected)
+    app.include_router(agenda.router, dependencies=protected)
+    app.include_router(session.router, dependencies=protected)
     app.include_router(health.router)
     return app

@@ -16,6 +16,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DIR}/test.db"
 os.environ["CALENDAR_BACKEND"] = "db"
 os.environ["LLM_API_KEY"] = "test-key-not-used"
 os.environ["LOG_LEVEL"] = "WARNING"
+# Désactive l'auth par clé API dans la suite par défaut. Les tests qui
+# veulent la vérifier l'activent explicitement via monkeypatch.
+os.environ["API_KEY"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

@@ -87,7 +87,26 @@ CALDAV_CALENDAR_URL=http://127.0.0.1:5232/admin/<uuid-collection>/
 | `CALDAV_USERNAME` / `CALDAV_PASSWORD` | Credentials CalDAV | — |
 | `CALDAV_CALENDAR_NAME` | Nom de calendrier à cibler | *premier trouvé* |
 | `CALDAV_CALENDAR_URL` | URL directe de collection (prioritaire sur `_NAME`) | — |
+| `API_KEY` | Si définie, toutes les routes (hors `/health`) exigent le header `X-API-Key` | *vide = auth désactivée* |
 | `LOG_LEVEL` | Niveau de log (`DEBUG`/`INFO`/…) | `INFO` |
+
+## Authentification
+
+Si `API_KEY` est renseignée dans `.env`, toutes les routes sauf `/health` requièrent le header :
+
+```
+X-API-Key: <valeur>
+```
+
+- Header absent → `401 Unauthorized`
+- Header incorrect → `403 Forbidden`
+- `API_KEY` vide côté serveur → auth désactivée (utile en dev)
+
+Dans Swagger (`/docs`), cliquer sur *Authorize* pour renseigner la clé une fois.
+
+```bash
+curl -H "X-API-Key: $API_KEY" http://localhost:8001/agenda
+```
 
 ## Endpoints
 

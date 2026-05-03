@@ -8,6 +8,8 @@ from datetime import date, timedelta
 
 from loguru import logger
 
+from src.db.database import SessionLocal
+from src.models.orm import User
 from src.services.calendar import get_calendar_repository
 
 SEED_MARKER = "[seed]"
@@ -44,6 +46,14 @@ def seed_agenda() -> None:
         logger.info("Seed ignoré — agenda déjà peuplé (marqueur détecté).")
         return
 
+    # Récupérer le premier utilisateur (ou créer un utilisateur par défaut)
+    with SessionLocal() as db:
+        user = db.query(User).first()
+        if not user:
+            logger.warning("Seed agenda ignoré — aucun utilisateur trouvé.")
+            return
+        user_id = str(user.id)
+
     today = date.today()
     created = 0
     for item in SEED_EVENTS:
@@ -54,8 +64,9 @@ def seed_agenda() -> None:
                 time=item["time"],
                 participants=item["participants"],
                 notes=f"{item['notes']} {SEED_MARKER}",
+                user_id=user_id,
             )
             created += 1
         except Exception as e:  # noqa: BLE001
             logger.exception(f"Seed: échec création '{item['title']}': {e}")
-    logger.info(f"Seed agenda: {created}/{len(SEED_EVENTS)} événements insérés.")
+    logger.info(f"Seed agenda: {created}/{len(SEED_EVENTS)} événements insérés pour l'utilisateur {user_id}.")

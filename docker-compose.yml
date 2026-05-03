@@ -3,15 +3,19 @@ services:
     build: .
     container_name: assistant-direction-api
     ports:
-      - "8002:8000"
+      - "8000:8000"
     env_file:
       - .env
     volumes:
       - ./data:/app/data
-      - ./src:/app/src
-      - ./main.py:/app/main.py
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+      - ./logs:/app/logs
+    command: ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Serveur CalDAV local (utilisé quand CALENDAR_BACKEND=caldav)
   radicale:

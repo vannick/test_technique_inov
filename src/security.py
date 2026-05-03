@@ -1,39 +1,42 @@
-"""Authentification par clé API via header HTTP.
+"""Authentification par JWT Bearer token.
 
-Mise en place d'une dépendance FastAPI `require_api_key` qui exige un header
-`X-API-Key` égal à `settings.api_key` sur les routes protégées.
+Dépendance FastAPI `get_current_user` qui extrait et valide le token JWT
+depuis le header `Authorization: Bearer <token>`. Le token doit être signé
+avec `settings.jwt_secret` et contenir `sub` (user_id) + `email`.
 
 Comportement:
-- Si `settings.api_key` est vide/None: l'auth est *désactivée* (mode dev).
-- Sinon: header manquant -> 401, header incorrect -> 403.
-- Le nom du header est déclaré via `APIKeyHeader`, ce qui ajoute automatiquement
-  le bouton "Authorize" dans Swagger UI.
+- Token manquant ou invalide → 401.
+- Token expiré → 401.
+- En cas de succès, injecte le payload (dict) dans la route.
 """
-from fastapi import HTTPException, Security, status
-from fastapi.security import APIKeyHeader
+from typing import Annotated
 
-from src.config import get_settings
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-API_KEY_HEADER = "X-API-Key"
+from src.auth import decode_access_token
 
-_api_key_scheme = APIKeyHeader(name=API_KEY_HEADER, auto_error=False)
+security = HTTPBearer(auto_error=False)
 
 
-def require_api_key(provided: str | None = Security(_api_key_scheme)) -> None:
-    """Valide le header `X-API-Key` contre `settings.api_key`.
+def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Security(security)]
+) -> dict:
+    """Valide le token JWT et renvoie le payload (sub, email, exp).
 
-    Noop si `api_key` n'est pas configurée côté serveur (pratique en dev).
+    Lève 401 si token absent, invalide ou expiré.
     """
-    expected = get_settings().api_key
-    if not expected:
-        return
-    if provided is None:
+    if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Header {API_KEY_HEADER} manquant",
+            detail="Token d'accès manquant",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    if provided != expected:
+    payload = decode_access_token(credentials.credentials)
+    if not payload:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Clé API invalide",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalide ou expiré",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+    return payload

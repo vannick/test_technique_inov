@@ -26,6 +26,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from src.app import create_app  # noqa: E402
 from src.config import get_settings  # noqa: E402
 from src.db.database import Base, engine  # noqa: E402
+from src.models.orm import User  # noqa: E402  # ensure model is registered
 
 
 @pytest.fixture(autouse=True)
@@ -52,3 +53,22 @@ def client(app):
     le seed au démarrage (chaque test part d'une DB vide).
     """
     return TestClient(app)
+
+
+@pytest.fixture
+def auth_headers(client: TestClient):
+    """Crée un utilisateur de test et renvoie les headers Authorization."""
+    from src.auth import hash_password
+    from src.db.database import SessionLocal
+    from src.models.orm import User
+
+    hashed = hash_password("secret")
+    user = User(email="alice@example.com", password_hash=hashed)
+    with SessionLocal() as db:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    resp = client.post("/auth/login", json={"email": "alice@example.com", "password": "secret"})
+    token = resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}

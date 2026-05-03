@@ -12,3 +12,7 @@ data
 *.db
 .idea
 .vscode
+logs
+*.log
+.DS_Store
+README_DEPLOY.md

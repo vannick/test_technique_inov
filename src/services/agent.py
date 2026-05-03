@@ -155,7 +155,7 @@ def _invoke_with_retry(executor: AgentExecutor, payload: dict) -> dict:
     raise last_exc
 
 
-def run_agent(session_id: Optional[str], user_message: str) -> dict:
+def run_agent(session_id: Optional[str], user_message: str, user_id: Optional[str] = None) -> dict:
     """Exécute un tour de dialogue complet avec tool calling.
 
     - Vérifie la présence de la clé LLM (sinon RuntimeError pour HTTP 503 en amont).
@@ -176,6 +176,7 @@ def run_agent(session_id: Optional[str], user_message: str) -> dict:
         "input": user_message,
         "chat_history": _build_chat_history(sid),
         "today": date.today().isoformat(),
+        "user_id": user_id,
     }
     result = _invoke_with_retry(executor, payload)
 

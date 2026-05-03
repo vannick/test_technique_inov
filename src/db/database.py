@@ -1,16 +1,12 @@
-"""Connexion SQLAlchemy + dépendance FastAPI."""
+"""Configuration SQLAlchemy : engine, session, init_db."""
 import os
 from pathlib import Path
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from src.config import get_settings
-
-
-class Base(DeclarativeBase):
-    pass
-
+from src.models import Base  # noqa: F401  # assure que tous les modèles sont enregistrés
 
 settings = get_settings()
 

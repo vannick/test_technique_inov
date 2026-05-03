@@ -14,7 +14,13 @@ from datetime import date
 from typing import Optional
 
 from groq import BadRequestError
-from langchain.agents.agent import AgentExecutor
+# Imports simplifiés pour compatibilité
+try:
+    from langchain.agents import AgentExecutor
+except ImportError:
+    # Alternative pour les versions plus récentes
+    from langchain.agents.agent import AgentExecutor
+
 from langchain.agents.format_scratchpad.tools import format_to_tool_messages
 from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage

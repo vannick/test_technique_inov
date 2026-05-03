@@ -7,6 +7,7 @@ from loguru import logger
 from src.config import get_settings
 from src.db.database import init_db
 from src.db.seed import seed_agenda
+from src.db.seed_users import seed_users
 from src.routes import agenda, agent, auth, health, session, user
 from src.security import get_current_user
 
@@ -21,6 +22,7 @@ async def lifespan(_app: FastAPI):
     # Toujours initialiser la DB: elle porte aussi la mémoire de session,
     # même quand l'agenda est servi par CalDAV.
     init_db()
+    seed_users()
     # Le seed passe par la factory CalendarRepository et peuple donc
     # le backend actif (SQLite ou CalDAV) de façon idempotente.
     seed_agenda()
@@ -49,3 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(user.router, dependencies=protected)
     app.include_router(health.router)
     return app
+
+
+# Instance par défaut pour uvicorn
+app = create_app()

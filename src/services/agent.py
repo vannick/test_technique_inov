@@ -102,9 +102,19 @@ def _build_executor() -> AgentExecutor:
     """
     settings = get_settings()
     # Température à 0 pour maximiser la stabilité du format tool-call.
-    llm = ChatGroq(
-        api_key=settings.llm_api_key, model=settings.llm_model, temperature=0,
-    )
+    try:
+        llm = ChatGroq(
+            api_key=settings.llm_api_key, 
+            model=settings.llm_model, 
+            temperature=0
+        )
+    except Exception as e:
+        logger.error(f"Erreur initialisation ChatGroq: {e}")
+        # Alternative plus simple
+        llm = ChatGroq(
+            api_key=settings.llm_api_key,
+            model=settings.llm_model
+        )
     prompt = ChatPromptTemplate.from_messages([
         ("system", SYSTEM_PROMPT),
         MessagesPlaceholder("chat_history", optional=True),

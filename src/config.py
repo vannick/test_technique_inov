@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     api_key: Optional[str] = Field(default=None, alias="API_KEY")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
+    # JWT
+    jwt_secret: str = Field(default="change-me-super-secret", alias="JWT_SECRET")
+
 
 @lru_cache
 def get_settings() -> Settings:

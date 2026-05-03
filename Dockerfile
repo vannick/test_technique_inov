@@ -13,9 +13,12 @@ RUN pip install -r requirements.txt
 # Code applicatif
 COPY . .
 
-# Dossier persistant pour SQLite (si utilisé)
+# Dossier persistant pour SQLite
 RUN mkdir -p /app/data
+
+# Créer les dossiers de logs
+RUN mkdir -p /app/logs
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]

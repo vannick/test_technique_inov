@@ -1,8 +1,9 @@
 """Routes de l'agent: dialogue (/chat) et introspection des outils (/tools)."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from loguru import logger
 
 from src.models.schemas import ChatIn, ChatOut
+from src.security import get_current_user
 from src.services.agent import run_agent
 from src.tools.handlers import TOOLS
 
@@ -28,7 +29,7 @@ def list_tools() -> list[dict]:
 
 
 @router.post("/chat", response_model=ChatOut, summary="Dialoguer avec l'agent")
-def chat(payload: ChatIn) -> ChatOut:
+def chat(payload: ChatIn, current_user: dict = Depends(get_current_user)) -> ChatOut:
     """Envoie un message à l'agent et renvoie sa réponse.
 
     - Si `session_id` est null, le serveur en génère un.
@@ -38,7 +39,7 @@ def chat(payload: ChatIn) -> ChatOut:
     """
     sid = str(payload.session_id) if payload.session_id else None
     try:
-        result = run_agent(sid, payload.message)
+        result = run_agent(sid, payload.message, user_id=current_user["sub"])
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
     except Exception as e:  # noqa: BLE001

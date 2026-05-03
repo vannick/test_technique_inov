@@ -127,26 +127,61 @@ dans la collection (idempotent : relance sans doublons grâce au marqueur
 | `CALDAV_USERNAME` / `CALDAV_PASSWORD` | Credentials CalDAV | - |
 | `CALDAV_CALENDAR_NAME` | Nom de calendrier à cibler | *premier trouvé* |
 | `CALDAV_CALENDAR_URL` | URL directe de collection (prioritaire sur `_NAME`) | - |
-| `API_KEY` | Si définie, toutes les routes (hors `/health`) exigent le header `X-API-Key` | *vide = auth désactivée* |
+| `JWT_SECRET` | Clé HMAC pour signer les JWT (≥32 octets recommandé) | `change-me-super-secret` |
 | `LOG_LEVEL` | Niveau de log (`DEBUG`/`INFO`/…) | `INFO` |
 
 ## Authentification
 
-Si `API_KEY` est renseignée dans `.env`, toutes les routes sauf `/health` requièrent le header :
+L'API utilise des **access tokens JWT** (valides 24 h). Les routes sont protégées
+sauf `/auth/login` et `/health`.
 
+### 1. Créer un utilisateur (temporaire, pour le dev)
+
+En local, tu peux créer un utilisateur directement en base :
+
+```python
+from src.auth import hash_password
+from src.db.database import SessionLocal
+from src.models.orm import User
+
+hashed = hash_password("secret")
+user = User(id="user-1", email="alice@example.com", password_hash=hashed)
+with SessionLocal() as db:
+    db.add(user)
+    db.commit()
 ```
-X-API-Key: <valeur>
-```
 
-- Header absent → `401 Unauthorized`
-- Header incorrect → `403 Forbidden`
-- `API_KEY` vide côté serveur → auth désactivée (utile en dev)
-
-Dans Swagger (`/docs`), cliquer sur *Authorize* pour renseigner la clé une fois.
+### 2. Se connecter
 
 ```bash
-curl -H "X-API-Key: $API_KEY" http://localhost:8001/agenda
+curl -X POST http://localhost:8001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "alice@example.com", "password": "secret"}'
 ```
+
+Réponse :
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "email": "alice@example.com"
+}
+```
+
+### 3. Utiliser le token
+
+```bash
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8001/agenda
+```
+
+- Token absent ou invalide → `401 Unauthorized`
+- Token expiré → `401 Unauthorized`
+
+Dans Swagger (`/docs`), clique sur **Authorize** → `Bearer <token>`.
+
+> **Important** : change `JWT_SECRET` en production (≥32 octets recommandé).
 
 ## Endpoints
 
@@ -185,13 +220,26 @@ Pour continuer la conversation, réutilise le `session_id` renvoyé.
 ### Exemple - CRUD direct
 
 ```bash
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
 # Créer
 curl -X POST http://localhost:8001/agenda \
   -H "Content-Type: application/json" \
-  -d '{"title":"Point RH","date":"2026-04-25","time":"10:00","participants":"Alice, Bob"}'
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"title": "Réunion projet", "date": "2026-05-03", "time": "10:00", "participants": "bob@example.com"}'
 
-# Lister la semaine
-curl "http://localhost:8001/agenda?range=week"
+# Lister
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8001/agenda
+
+# Mettre à jour
+curl -X PATCH http://localhost:8001/agenda/<id> \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"notes": "Préparer slides"}'
+
+# Supprimer
+curl -X DELETE http://localhost:8001/agenda/<id> \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Architecture

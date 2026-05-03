@@ -1,10 +1,9 @@
-"""Schémas Pydantic utilisés par les routes."""
+"""Schémas Pydantic pour les routes FastAPI."""
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel, Field, EmailStr
 from uuid import UUID
-
-from pydantic import BaseModel, Field
-
 
 class EventIn(BaseModel):
     title: str
@@ -27,8 +26,9 @@ class EventOut(BaseModel):
     title: str
     date: str
     time: str
-    participants: str = ""
-    notes: str = ""
+    participants: str
+    notes: str
+    user_id: str = ""
 
 
 class ChatIn(BaseModel):
@@ -50,3 +50,24 @@ class MessageOut(BaseModel):
     role: str
     content: str
     timestamp: datetime
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    email: str
+
+
+class UserOut(BaseModel):
+    id: str
+    email: str
+    role: str
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    adresse: Optional[str] = None
+    created_at: datetime

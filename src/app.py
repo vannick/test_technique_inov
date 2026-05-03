@@ -7,8 +7,8 @@ from loguru import logger
 from src.config import get_settings
 from src.db.database import init_db
 from src.db.seed import seed_agenda
-from src.routes import agenda, agent, health, session
-from src.security import require_api_key
+from src.routes import agenda, agent, auth, health, session, user
+from src.security import get_current_user
 
 
 @asynccontextmanager
@@ -39,11 +39,13 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # /health reste ouvert (liveness check). Les autres routers sont
-    # protégés par la dépendance `require_api_key` (header X-API-Key).
-    protected = [Depends(require_api_key)]
+    # /auth/login et /health restent ouverts. Les autres routers exigent
+    # un JWT valide via `get_current_user`.
+    protected = [Depends(get_current_user)]
+    app.include_router(auth.router)  # login ouvert
     app.include_router(agent.router, dependencies=protected)
     app.include_router(agenda.router, dependencies=protected)
     app.include_router(session.router, dependencies=protected)
+    app.include_router(user.router, dependencies=protected)
     app.include_router(health.router)
     return app

@@ -1,0 +1,5 @@
+nohup: ignoring input
+INFO:     Will watch for changes in these directories: ['/home/windigitech/Documents/me/testinov/test_technique_inov']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [45084] using WatchFiles
+ERROR:    Error loading ASGI app. Attribute "app" not found in module "src.app".

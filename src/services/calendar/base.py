@@ -7,12 +7,12 @@ from src.models.schemas import EventOut
 
 class CalendarRepository(ABC):
     @abstractmethod
-    def list_events(self, date: Optional[str] = None, range_: Optional[str] = None) -> list[EventOut]:
+    def list_events(self, date: Optional[str] = None, range_: Optional[str] = None, user_id: Optional[str] = None) -> list[EventOut]:
         ...
 
     @abstractmethod
     def create_event(
-        self, title: str, date: str, time: str, participants: str = "", notes: str = ""
+        self, title: str, date: str, time: str, participants: str = "", notes: str = "", user_id: Optional[str] = None
     ) -> EventOut:
         ...
 

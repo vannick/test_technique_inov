@@ -49,13 +49,13 @@ sleep 10
 
 # Vérifier le santé du service
 echo "🔍 Vérification du service..."
-if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+if curl -f http://localhost:8001/health > /dev/null 2>&1; then
     echo "✅ Service démarré avec succès !"
     echo ""
     echo "📊 Informations de déploiement :"
-    echo "   - URL de l'API: http://localhost:8000"
-    echo "   - Documentation: http://localhost:8000/docs"
-    echo "   - Health check: http://localhost:8000/health"
+    echo "   - URL de l'API: http://localhost:8001"
+    echo "   - Documentation: http://localhost:8001/docs"
+    echo "   - Health check: http://localhost:8001/health"
     echo ""
     echo "👤 Utilisateur par défaut :"
     echo "   - Email: vannicknonongo@gmail.com"

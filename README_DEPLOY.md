@@ -36,9 +36,9 @@ JWT_SECRET=votre-clé-secrete-très-longue-et-sécurisée
 ```
 
 ### 5. Vérifier le déploiement
-- API: http://localhost:8000
-- Documentation: http://localhost:8000/docs
-- Health check: http://localhost:8000/health
+- API: http://localhost:8001
+- Documentation: http://localhost:8001/docs
+- Health check: http://localhost:8001/health
 
 ## 🔐 Accès par défaut
 

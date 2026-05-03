@@ -63,21 +63,21 @@ Utilisez ces identifiants pour vous connecter :
 
 ```bash
 # Voir les logs en temps réel
-docker-compose logs -f
+docker compose logs -f
 
 # Voir les logs de l'API uniquement
-docker-compose logs -f api
+docker compose logs -f api
 
 # Redémarrer les services
-docker-compose restart
+docker compose restart
 
 # Arrêter les services
-docker-compose down
+docker compose down
 
 # Mettre à jour l'application
 git pull
-docker-compose build
-docker-compose up -d
+docker compose build
+docker compose up -d
 ```
 
 ## 🌐 Configuration pour un nom de domaine

@@ -67,6 +67,6 @@ if curl -f http://localhost:8000/health > /dev/null 2>&1; then
     echo "   - Redémarrer: docker compose restart"
 else
     echo "❌ Le service n'a pas démarré correctement. Vérifiez les logs :"
-    echo "   docker-compose logs api"
+    echo "   docker compose logs api"
     exit 1
 fi

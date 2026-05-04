@@ -22,7 +22,7 @@ def list_tools() -> list[dict]:
         {
             "name": t.name,
             "description": t.description,
-            "args_schema": t.args_schema.model_json_schema() if t.args_schema else {},
+            "args_schema": t.args_schema.schema() if t.args_schema else {},
         }
         for t in TOOLS
     ]

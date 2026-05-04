@@ -10,11 +10,51 @@ def seed_users():
         {
             "email": "vannicknonongo@gmail.com",
             "password": "Mot2p@sse",
-            "role": "admin",
+            "role": "Tech Lead",
             "nom": "Nonongo",
             "prenom": "Vannick",
             "adresse": "123 rue de la République, Paris",
         },
+        {
+            "email": "saurel.lepene@gmail.com",
+            "password": "Mot2p@sse",
+            "role": "CTO",
+            "nom": "LEPENE",
+            "prenom": "Saurel",
+            "adresse": "Yaounde",
+        },
+        {
+            "email": "nfouaeugene953@gmail.com",
+            "password": "Mot2p@sse",
+            "role": "Dev full stack",
+            "nom": "MFOUO",
+            "prenom": "Eugène",
+            "adresse": "Yaounde",
+        },
+        {
+            "email": "charlessundi2003@gmail.com",
+            "password": "Mot2p@sse",
+            "role": "Dev full stack",
+            "nom": "EKEME",
+            "prenom": "Charles",
+            "adresse": "Douala",
+        },
+        {
+            "email": "youbissiyvan@gmail.com",
+            "password": "Mot2p@sse",
+            "role": "Dev front fullstack",
+            "nom": "YOUBISSI",
+            "prenom": "Yvan",
+            "adresse": "Yaounde",
+        },
+        {
+            "email": "florencemetende@mail.com",
+            "password": "Mot2p@sse",
+            "role": "Dev front Web et Mobile",
+            "nom": "EBA METENDE",
+            "prenom": "Tatiana",
+            "adresse": "Yaounde",
+        }
     ]
 
     with SessionLocal() as db:

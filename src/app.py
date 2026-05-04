@@ -2,6 +2,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from src.config import get_settings
@@ -39,6 +40,15 @@ def create_app() -> FastAPI:
         ),
         version="0.1.0",
         lifespan=lifespan,
+    )
+
+    # Configuration CORS pour autoriser toutes les origines
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Autorise toutes les origines
+        allow_credentials=True,
+        allow_methods=["*"],  # Autorise toutes les méthodes HTTP
+        allow_headers=["*"],  # Autorise tous les headers
     )
 
     # /auth/login et /health restent ouverts. Les autres routers exigent

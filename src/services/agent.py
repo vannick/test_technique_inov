@@ -104,7 +104,7 @@ def _build_executor() -> AgentExecutor:
     # Température à 0 pour maximiser la stabilité du format tool-call.
     try:
         llm = ChatGroq(
-            api_key=settings.llm_api_key, 
+            api_key="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", #settings.llm_api_key, 
             model=settings.llm_model, 
             temperature=0
         )
